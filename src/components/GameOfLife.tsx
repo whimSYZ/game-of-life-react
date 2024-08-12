@@ -4,19 +4,23 @@ import Cell from "./Cell.tsx";
 // Define the type for the grid
 type Grid = boolean[][];
 type GameOfLifeProps = {
-    numRows: number, 
-    numCols: number, 
-    density: number,
-    interval: number
+    numRows?: number, 
+    numCols?: number, 
+    density?: number,
+    interval?: number
 }
 
 const initGrid = (numRows, numCols, density): Grid => {
-  const rows = Array(numRows).fill(0).map(() => Array(numCols).fill(0).map(() => Math.random() < density));
-  return rows;
+  return Array(numRows).fill(0).map(() => Array(numCols).fill(0).map(() => Math.random() < density));
 };
 
-const GameOfLife: React.FC<GameOfLifeProps> = (props: GameOfLifeProps) => {
-  const [grid, setGrid] = useState<Grid>(() => initGrid(props.numRows, props.numCols, props.density));
+export default function GameOfLife({
+    numRows= 20,
+    numCols= 40,
+    density= 0.2,
+    interval= 1000
+}: GameOfLifeProps) {
+  const [grid, setGrid] = useState<Grid>(initGrid(numRows, numCols, density));
 
   const runSimulation = () => {
     setGrid((g) => {
@@ -35,7 +39,7 @@ const GameOfLife: React.FC<GameOfLifeProps> = (props: GameOfLifeProps) => {
 
           let liveNeighbors = 0;
           neighbors.forEach(([x, y]) => {
-            if (x >= 0 && x < props.numRows && y >= 0 && y < props.numCols && g[x][y]) {
+            if (x >= 0 && x < numRows && y >= 0 && y < numCols && g[x][y]) {
               liveNeighbors += 1;
             }
           });
@@ -43,6 +47,7 @@ const GameOfLife: React.FC<GameOfLifeProps> = (props: GameOfLifeProps) => {
           if (cell && (liveNeighbors < 2 || liveNeighbors > 3)) {
             return false;
           }
+        
           if (!cell && liveNeighbors === 3) {
             return true;
           }
@@ -53,8 +58,9 @@ const GameOfLife: React.FC<GameOfLifeProps> = (props: GameOfLifeProps) => {
   };
 
   useEffect(() => {
-    setInterval(runSimulation, props.interval)
-  }, [])
+    const intervalId = setInterval(runSimulation, interval);
+    return () => clearInterval(intervalId);
+  }, [runSimulation])
 
   const toggleCellState = (row: number, col: number) => {
     const newGrid = grid.map((r, i) =>
@@ -64,16 +70,10 @@ const GameOfLife: React.FC<GameOfLifeProps> = (props: GameOfLifeProps) => {
   };
 
   return (
-    <div>
-      <button
-        onClick={() => setGrid(initGrid( props.numRows, props.numCols, props.density))}
-      >
-        Clear
-      </button>
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: `repeat(${props.numCols}, 20px)`,
+          gridTemplateColumns: `repeat(${numCols}, 20px)`,
         }}
       >
         {grid.map((row, i) =>
@@ -86,15 +86,5 @@ const GameOfLife: React.FC<GameOfLifeProps> = (props: GameOfLifeProps) => {
           ))
         )}
       </div>
-    </div>
   );
 };
-
-GameOfLife.defaultProps = {
-    numRows: 60,
-    numCols: 20,
-    density: 0.2,
-    interval: 1000
-}
-
-export default GameOfLife;
